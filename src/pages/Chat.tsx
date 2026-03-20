@@ -79,6 +79,17 @@ export default function Chat() {
 
       const response = await api.chat(input, history);
 
+      // Use actual agent from backend
+      const agentMap: Record<string, string> = {
+        chat: 'Chat Agent',
+        code: 'Code Agent',
+        search: 'Search Agent',
+        image: 'Image Agent',
+        ppt: 'PPT Agent',
+        email: 'Email Agent',
+      };
+      setDetectedAgent(agentMap[response.agent_used] || agent.name);
+
       setExecutionSteps([
         { icon: Brain, text: 'Analyzing your request...', status: 'complete' },
         { icon: agent.icon, text: `Using ${agent.name}...`, status: 'complete' },
