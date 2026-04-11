@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Code, Search, Image, Presentation, LogOut, Mail } from 'lucide-react';
+import { Brain, Code, Search, Image, Presentation, LogOut, Mail,FileText } from 'lucide-react';
 import { removeToken } from '../utils/api';
 
 export default function Dashboard() {
@@ -18,6 +18,7 @@ export default function Dashboard() {
     { icon: Image, name: 'Image Agent', desc: 'Generate visual assets', route: '/chat', runsToday: 4 },
     { icon: Presentation, name: 'PPT Agent', desc: 'Create presentations', route: '/chat', runsToday: 3 },
     { icon: Mail, name: 'Email Agent', desc: 'Draft and send emails', route: '/chat', runsToday: 2 },
+    { icon: FileText, name: 'RAG Agent', desc: 'Retrieve and summarize documents', route: '/chat', runsToday: 5 },
   ];
 
   const recentTasks = [
