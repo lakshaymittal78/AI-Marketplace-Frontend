@@ -23,6 +23,7 @@ export default function Chat() {
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState('');
   const [documents, setdocuments] = useState<{ id: number, title: String, filename: String }[]>([]);
+  const [usage, setUsage] = useState<any>(null);
 
   const fetchDocuments = async () => {
     const token = localStorage.getItem('token');
@@ -124,6 +125,11 @@ export default function Chat() {
       } else if (event.data.startsWith('__error__')) {
         setError(event.data.slice(9));
         setLoading(false);
+      } else if (event.data.startsWith('__tokens__')) {
+        const usageData = JSON.parse(event.data.replace('__tokens__', ''));
+        setUsage(usageData);
+        // Update localStorage with new token info
+        localStorage.setItem('tokenInfo', JSON.stringify(usageData));
       } else {
         setDisplayedResponse((prev) => prev + event.data);
       }
@@ -165,10 +171,21 @@ export default function Chat() {
       </nav>
 
       <div className="flex-1 container mx-auto px-6 py-12 relative z-10 flex flex-col">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <div className="label mb-1">Workspace</div>
-          <h1 className="text-3xl font-medium text-white mb-1">Agent console</h1>
-          <p className="text-sm text-zinc-500">Describe what you need. OneAgent will route it to the right capability.</p>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex justify-between items-start">
+          <div>
+            <div className="label mb-1">Workspace</div>
+            <h1 className="text-3xl font-medium text-white mb-1">Agent console</h1>
+            <p className="text-sm text-zinc-500">Describe what you need. OneAgent will route it to the right capability.</p>
+          </div>
+          {usage && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[#111111] border border-[#1f1f1f] rounded-lg p-3">
+              <div className="text-right">
+                <p className="text-[11px] uppercase tracking-wider text-zinc-500 mb-2">Token Usage</p>
+                <p className="text-lg font-medium text-indigo-400">{usage.used || 0} / {usage.remaining || 0}</p>
+                {usage.status && <p className="text-[10px] text-yellow-400 mt-1">{usage.status}</p>}
+              </div>
+            </motion.div>
+          )}
         </motion.div>
 
         <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} onSubmit={handleSubmit} className="mb-2">
@@ -270,6 +287,11 @@ export default function Chat() {
                       {detectedAgent === 'Chat Agent' && <Brain className="w-3 h-3 mr-1 mono-icon" />}
                       {detectedAgent}
                     </span>
+                    {usage && (
+                      <span className="inline-flex items-center rounded-full border border-[#1f1f1f] px-2.5 py-1 text-[11px] text-zinc-500">
+                        {usage.used}/{usage.remaining} tokens
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button onClick={handleCopy} className="p-2 border border-[#1f1f1f] rounded-md hover:bg-[#18181b] transition-colors" title="Copy response">

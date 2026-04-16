@@ -1,7 +1,15 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+export interface TokenInfo {
+  used: number;
+  limit: number;
+  remaining: number;
+  status: string | null;
+}
+
 export interface AuthResponse {
   access_token: string;
+  tokens?: TokenInfo;
 }
 
 export interface ChatMessage {
@@ -77,7 +85,29 @@ export const api = {
 
     return response.json();
   },
-};
+
+  getTokenInfo: async (): Promise<TokenInfo> => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chat/tokens`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch token info');
+    }
+
+    return response.json();
+  },
+}
 
 export const getToken = () => localStorage.getItem('token');
 export const setToken = (token: string) => localStorage.setItem('token', token);

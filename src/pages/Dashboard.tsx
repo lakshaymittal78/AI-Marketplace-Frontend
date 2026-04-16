@@ -1,13 +1,47 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Brain, Code, Search, Image, Presentation, LogOut, Mail,FileText } from 'lucide-react';
-import { removeToken } from '../utils/api';
+import { removeToken, api } from '../utils/api';
+import { useEffect, useState } from 'react';
+
+interface TokenInfo {
+  used: number;
+  limit: number;
+  remaining: number;
+  status: string | null;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTokenInfo = async () => {
+      try {
+        // Try to get from localStorage first
+        const stored = localStorage.getItem('tokenInfo');
+        if (stored) {
+          setTokenInfo(JSON.parse(stored));
+        }
+        
+        // Then fetch fresh from API
+        const fresh = await api.getTokenInfo();
+        setTokenInfo(fresh);
+        localStorage.setItem('tokenInfo', JSON.stringify(fresh));
+      } catch (error) {
+        console.error('Failed to fetch token info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTokenInfo();
+  }, []);
 
   const handleLogout = () => {
     removeToken();
+    localStorage.removeItem('tokenInfo');
     navigate('/');
   };
 
@@ -84,6 +118,50 @@ export default function Dashboard() {
               Overview of the agents your team relies on day to day.
             </p>
           </motion.header>
+
+          {/* Token Info Card */}
+          {tokenInfo && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-8 card-surface p-4 border-l-2 border-l-indigo-500"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-zinc-500 mb-2">Token Usage</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-medium text-white">{tokenInfo.remaining}</p>
+                    <p className="text-sm text-zinc-400">/ {tokenInfo.limit} remaining</p>
+                  </div>
+                  <div className="mt-2 w-48 h-2 bg-[#1f1f1f] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        tokenInfo.status === 'LIMIT_EXCEEDED'
+                          ? 'bg-red-500'
+                          : tokenInfo.status === 'WARNING_80_PERCENT'
+                          ? 'bg-yellow-500'
+                          : 'bg-indigo-500'
+                      }`}
+                      style={{
+                        width: `${Math.min((tokenInfo.used / tokenInfo.limit) * 100, 100)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                {tokenInfo.status && tokenInfo.status !== 'OK' && (
+                  <div className="text-right">
+                    {tokenInfo.status === 'WARNING_80_PERCENT' && (
+                      <p className="text-sm text-yellow-400">⚠️ Nearing limit</p>
+                    )}
+                    {tokenInfo.status === 'LIMIT_EXCEEDED' && (
+                      <p className="text-sm text-red-400">🚨 Limit exceeded</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}

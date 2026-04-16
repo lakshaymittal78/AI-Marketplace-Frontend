@@ -23,12 +23,20 @@ export default function Auth() {
         const response = await api.login(username, password);
         setToken(response.access_token);
         localStorage.setItem('username', username);
+        // Store token info if available
+        if (response.tokens) {
+          localStorage.setItem('tokenInfo', JSON.stringify(response.tokens));
+        }
         navigate('/dashboard');
       } else {
         await api.register(username, password);
         const response = await api.login(username, password);
         setToken(response.access_token);
         localStorage.setItem('username', username);
+        // Store token info if available
+        if (response.tokens) {
+          localStorage.setItem('tokenInfo', JSON.stringify(response.tokens));
+        }
         navigate('/dashboard');
       }
     } catch (err) {
